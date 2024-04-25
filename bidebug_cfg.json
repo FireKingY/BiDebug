@@ -1,0 +1,7 @@
+{
+    "cmd": "python3 test.py",
+    "env_name": "TEST_ENV",
+    "start": 1,
+    "end": 100,
+    "pass_count": 5
+}

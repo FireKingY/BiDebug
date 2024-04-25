@@ -55,7 +55,7 @@ def load_cfg(cfg_file_name):
         with open(cfg_file_name, 'r') as f:
             return json.loads(f.read())
     except FileNotFoundError:
-        err(f"Configuration file not found: {cfg_file_name}")
+        err(f"Configuration file not found: {cfg_file_name}, use -h for help")
         sys.exit(1)
     except json.JSONDecodeError:
         err(f"Error decoding JSON from the configuration file: {cfg_file_name}")
