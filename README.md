@@ -53,7 +53,7 @@ Here's an example of how to configure these settings:
 Launch the debugging process using the `-c` option to specify the configuration file:
 
 ```bash
-python script.py -c bidebug_cfg.json
+python script.py -c bidebug_cfg.json -q
 ```
 
 Optional parameters:
@@ -61,3 +61,24 @@ Optional parameters:
 - `-q` for quiet mode, which reduces log output.
 - `-v` for verbose mode, which provides detailed output during the debugging process.
 - `--dry-run` to simulate the command execution without actually running the commands.
+
+possibile log output:
+```
+[bidebug][info][Thu Apr 25 17:51:27 2024] {'cmd': 'python3 test.py', 'env_name': 'TEST_ENV', 'start': 1, 'end': 100, 'pass_count': 5}
+[bidebug][info][Thu Apr 25 17:51:28 2024] start_ret=1
+[bidebug][info][Thu Apr 25 17:51:28 2024] end_ret=0
+[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 50 with result 0
+[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 1, end: 50
+[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 25 with result 1
+[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 26, end: 50
+[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 38 with result 0
+[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 26, end: 38
+[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 32 with result 1
+[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 33, end: 38
+[bidebug][info][Thu Apr 25 17:51:29 2024] Checking mid point 35 with result 0
+[bidebug][info][Thu Apr 25 17:51:29 2024] Updated search range - start: 33, end: 35
+[bidebug][info][Thu Apr 25 17:51:29 2024] Checking mid point 34 with result 0
+[bidebug][info][Thu Apr 25 17:51:29 2024] Updated search range - start: 33, end: 34
+[bidebug][info][Thu Apr 25 17:51:29 2024] Transition found at 34
+[bidebug][info][Thu Apr 25 17:51:29 2024] result:34
+```
