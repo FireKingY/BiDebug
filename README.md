@@ -1,42 +1,64 @@
-# Binary and Sequential Debugging Tool
+# Bidebug
 
-This Python script facilitates the debugging of applications through environmental variables using both binary and sequential search methodologies.
+`Bidebug` is a Python-based debugging tool designed to help developers identify the exact point at which the behavior of a shell command changes due to modifications in environment variable settings. It supports both binary and sequential search methods.
 
 ## Features
 
-- **Binary Debugging**: Quickly locates the transition point where application behavior changes due to configuration.
-- **Sequential Debugging**: Iteratively tests each configuration to pinpoint the exact point of failure.
-- **Configuration Template Generation**: Automatically generates a default configuration file template.
-- **Verbose Logging**: Supports both normal and verbose logging modes to provide detailed tracking of the debugging process.
-- **Dry Run Mode**: Simulates the debugging process without executing actual commands, ideal for testing setups.
+- **Binary Search Debugging**: Quickly narrows down the range of values to find the precise change point.
+- **Sequential Search Debugging**: Sequentially tests each value to identify when the output changes.
+- **Configurable**: Allows users to define custom configurations through a JSON file.
 
 ## Installation
 
-No special installation steps are required—simply download the script and it is ready to use.
+Clone this repository or download the script:
+
+```bash
+git clone https://your-repository-url.git
+```
+
+Ensure Python 3 is installed on your system.
 
 ## Usage
 
-### Generate Configuration File
+### Generating Configuration File
 
-Generate a default configuration file using the `-g` option:
+To generate a default configuration template, run:
 
 ```bash
-python script.py -g
+python bidebug.py --generate-config
 ```
 
-This will create a file named `bidebug_cfg.json` in the current directory.
+This command creates a `bidebug_cfg.json` file with default values in your current directory, which you can modify according to your needs.
 
-### Edit Configuration File
 
-Modify `bidebug_cfg.json` as needed. Each field in the configuration file is explained below:
+### Running the Tool
 
-- **cmd**: The shell command to be executed for testing. It should be a command that can be influenced by changing the `env_name` variable.
-- **env_name**: The name of the environment variable that the script will modify during the debugging process.
-- **start**: The starting value of the environment variable; this should be the lower bound of the range you believe the transition might occur.
-- **end**: The ending value of the environment variable; this should be the upper bound of the range. It must be greater than the `start` value.
-- **pass_count**: The number of times the command must execute successfully (i.e., exit with a status of 0) before considering the current environment setting as stable.
+To start debugging, use the following command:
 
-Here's an example of how to configure these settings:
+```bash
+python bidebug.py --config your_config_file.json
+```
+
+Additional options:
+
+- **--sequential**: Use sequential debugging instead of binary search.
+- **-q, --quiet**: Suppress command output.
+- **-v, --verbose**: Enable verbose output.
+- **--dry-run**: Simulate command execution without running the actual commands.
+
+## Configuration Details
+
+The configuration file (`bidebug_cfg.json`) is a JSON-formatted file that specifies how `Bidebug` should operate. Below are the fields that can be set in the configuration file:
+
+- **cmd**: The shell command that `Bidebug` will execute during debugging. This should be a command whose output or behavior changes based on environment variables.
+- **env_name**: The name of the environment variable that will be modified during the debugging process.
+- **start**: The starting value of the environment variable. This is the initial point from which the debugging process will either start incrementing (sequential) or use as a baseline for binary search.
+- **end** (optional): The ending value of the environment variable for sequential debugging. If not specified for binary search, the script will exponentially find a range where the behavior of the command changes.
+- **pass_count** (optional): The number of times the command must execute successfully (exit code 0) before considering the test at a specific environment variable setting as passed. Defaults to 1 if not specified.
+
+### Example Configuration
+
+Here is an example of a configuration file that sets the environment variable `TEST_ENV` for the command `python3 test.py`, starting from 1 and ending at 100, requiring each test to pass 5 times before moving on:
 
 ```json
 {
@@ -48,37 +70,24 @@ Here's an example of how to configure these settings:
 }
 ```
 
-### Start Debugging
+This configuration will help `Bidebug` to systematically test how changes in `TEST_ENV` from 1 to 100 affect the behavior of `python3 test.py`, ensuring robustness in the testing phase by requiring multiple successful executions.
 
-Launch the debugging process using the `-c` option to specify the configuration file:
+### Examples
+
+Run binary search debugging:
 
 ```bash
-python script.py -c bidebug_cfg.json -q
+python bidebug.py --config bidebug_cfg.json
 ```
 
-Optional parameters:
-- `-s` to use sequential debugging instead of the default binary search.
-- `-q` for quiet mode, which reduces log output.
-- `-v` for verbose mode, which provides detailed output during the debugging process.
-- `--dry-run` to simulate the command execution without actually running the commands.
+Run sequential search debugging:
 
-possibile log output:
+```bash
+python bidebug.py --config bidebug_cfg.json --sequential
 ```
-[bidebug][info][Thu Apr 25 17:51:27 2024] {'cmd': 'python3 test.py', 'env_name': 'TEST_ENV', 'start': 1, 'end': 100, 'pass_count': 5}
-[bidebug][info][Thu Apr 25 17:51:28 2024] start_ret=1
-[bidebug][info][Thu Apr 25 17:51:28 2024] end_ret=0
-[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 50 with result 0
-[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 1, end: 50
-[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 25 with result 1
-[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 26, end: 50
-[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 38 with result 0
-[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 26, end: 38
-[bidebug][info][Thu Apr 25 17:51:28 2024] Checking mid point 32 with result 1
-[bidebug][info][Thu Apr 25 17:51:28 2024] Updated search range - start: 33, end: 38
-[bidebug][info][Thu Apr 25 17:51:29 2024] Checking mid point 35 with result 0
-[bidebug][info][Thu Apr 25 17:51:29 2024] Updated search range - start: 33, end: 35
-[bidebug][info][Thu Apr 25 17:51:29 2024] Checking mid point 34 with result 0
-[bidebug][info][Thu Apr 25 17:51:29 2024] Updated search range - start: 33, end: 34
-[bidebug][info][Thu Apr 25 17:51:29 2024] Transition found at 34
-[bidebug][info][Thu Apr 25 17:51:29 2024] result:34
+
+Enable verbose mode:
+
+```bash
+python bidebug.py --config bidebug_cfg.json --verbose
 ```
