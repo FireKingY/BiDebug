@@ -3,7 +3,6 @@ import json
 import subprocess
 import os
 import time
-import getopt
 import sys
 def info(info_str):
     """
@@ -68,12 +67,12 @@ def validate_cfg(cfg):
     :param cfg: dict, the configuration dictionary to validate.
     :return: bool, True if validation passes, otherwise False.
     """
-    required_fields = ["cmd", "env_name", "start", "end", "pass_count"]
+    required_fields = ["cmd", "env_name", "start", "end"]
     missing_fields = [field for field in required_fields if field not in cfg]
     if missing_fields:
         err(f"Missing configuration fields: {', '.join(missing_fields)}")
         return False
-    if not isinstance(cfg["start"], int) or not isinstance(cfg["end"], int) or not isinstance(cfg["pass_count"], int):
+    if not isinstance(cfg["start"], int) or not isinstance(cfg["end"], int):
         err("Configuration fields 'start', 'end', and 'pass_count' must be integers.")
         return False
     if cfg["start"] >= cfg["end"]:
@@ -127,7 +126,7 @@ def bidebug(cfg, quiet=False):
     env_name = cfg["env_name"]
     start = int(cfg["start"])
     end = int(cfg["end"])
-    pass_count = int(cfg["pass_count"])
+    pass_count = cfg["pass_count"] if "pass_count" in cfg else 1
 
     start_ret = run_cmd(cmd, env_name, start, pass_count, quiet) if "start_ret" not in cfg else int(cfg["start_ret"])
     end_ret = run_cmd(cmd, env_name, end, pass_count, quiet) if "end_ret" not in cfg else int(cfg["end_ret"])
@@ -171,7 +170,7 @@ def seqDebug(cfg, quiet=False):
     env_name = cfg["env_name"]
     start = int(cfg["start"])
     end = int(cfg["end"])
-    pass_count = int(cfg["pass_count"])
+    pass_count = cfg["pass_count"] if "pass_count" in cfg else 1
 
     last_code = run_cmd(cmd, env_name, start, pass_count, quiet)
     for i in range(start+1, end):
