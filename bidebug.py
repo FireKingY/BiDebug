@@ -67,16 +67,13 @@ def validate_cfg(cfg):
     :param cfg: dict, the configuration dictionary to validate.
     :return: bool, True if validation passes, otherwise False.
     """
-    required_fields = ["cmd", "env_name", "start", "end"]
+    required_fields = ["cmd", "env_name", "start"]
     missing_fields = [field for field in required_fields if field not in cfg]
     if missing_fields:
         err(f"Missing configuration fields: {', '.join(missing_fields)}")
         return False
-    if not isinstance(cfg["start"], int) or not isinstance(cfg["end"], int):
+    if not isinstance(cfg["start"], int):
         err("Configuration fields 'start', 'end', and 'pass_count' must be integers.")
-        return False
-    if cfg["start"] >= cfg["end"]:
-        err("Configuration field 'start' must be less than 'end'.")
         return False
     return True
 
@@ -115,6 +112,31 @@ def run_cmd(cmd_str, env_name, env_value, pass_count, quiet=False):
     verbose_info("test passed with " + env_name + "=" + str(env_value))
     return 0
 
+def get_range(cfg, quiet=False):
+    cmd = cfg["cmd"]
+    env_name = cfg["env_name"]
+    start = cfg["start"]
+    pass_count = cfg["pass_count"] if "pass_count" in cfg else 1
+    start_result = run_cmd(cmd, env_name, start, pass_count, quiet) if "start_ret" not in cfg else int(cfg["start_ret"])
+
+    if "end" in cfg:
+        end = cfg["end"]
+        end_result = run_cmd(cmd, env_name, end, pass_count, quiet) if "end_ret" not in cfg else int(cfg["end_ret"])
+        return [start, start_result, end, end_result]
+
+
+    end = start
+    increment_factor = 1  
+    end_result = start_result
+    # Exponentially increase 'cur_val' until a change in behavior is detected
+    while True:
+        end += increment_factor
+        increment_factor *= 2
+        end_result = run_cmd(cmd, env_name, end, pass_count, quiet)
+        if end_result != start_result:
+            break
+        start = end
+    return [start, start_result, end, end_result]
 
 def bidebug(cfg, quiet=False):
     """
@@ -124,16 +146,14 @@ def bidebug(cfg, quiet=False):
     """
     cmd = cfg["cmd"]
     env_name = cfg["env_name"]
-    start = int(cfg["start"])
-    end = int(cfg["end"])
     pass_count = cfg["pass_count"] if "pass_count" in cfg else 1
 
-    start_ret = run_cmd(cmd, env_name, start, pass_count, quiet) if "start_ret" not in cfg else int(cfg["start_ret"])
-    end_ret = run_cmd(cmd, env_name, end, pass_count, quiet) if "end_ret" not in cfg else int(cfg["end_ret"])
+    start, start_ret, end, end_ret = get_range(cfg, quiet)
 
     info("start_ret=" + str(start_ret))
     info("end_ret=" + str(end_ret))
 
+    info(f"init search range - start: {start}, end: {end}")
     if start_ret == end_ret:
         err("Error, no transition found as start_ret equals end_ret")
         return
@@ -146,7 +166,7 @@ def bidebug(cfg, quiet=False):
 
         # When the mid value returns the same result as the start, increase the start
         if mid_ret == start_ret:
-            start = mid + 1
+            start = mid
         else:
             end = mid
 
@@ -164,17 +184,22 @@ def bidebug(cfg, quiet=False):
     info(f"Transition found at {start}")
     return start
 
-
+def infinite_range(start=0, step=1):
+    current = start
+    while True:
+        yield current
+        current += step
 def seqDebug(cfg, quiet=False):
     cmd = cfg["cmd"]
     env_name = cfg["env_name"]
     start = int(cfg["start"])
-    end = int(cfg["end"])
     pass_count = cfg["pass_count"] if "pass_count" in cfg else 1
 
     last_code = run_cmd(cmd, env_name, start, pass_count, quiet)
-    for i in range(start+1, end):
+    cus_range = range(start, cfg["end"]) if "end" in cfg else infinite_range(start, 1)
+    for i in cus_range:
         this_code = run_cmd(cmd, env_name, i, pass_count, quiet)
+        info(f"Checking point {i} with result {this_code}")
         if last_code != this_code:
             return i
         last_code = this_code
