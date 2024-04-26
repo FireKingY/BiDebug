@@ -13,7 +13,7 @@
 Clone this repository or download the script:
 
 ```bash
-git clone https://your-repository-url.git
+git clone https://github.com/FireKingY/BiDebug
 ```
 
 Ensure Python 3 is installed on your system.
